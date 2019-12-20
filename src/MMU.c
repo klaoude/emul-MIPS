@@ -2,13 +2,66 @@
 
 void InitMemory(Memory* mem)
 {
-    for(int i = 0; i < 4096; i++)
+    memset(mem->ROM, 0, 0xffff);
+    mem->freeBss = BSS_ADDRESS;
+    mem->freeData = DATA_ADDRESS;
+    mem->freeRom = STACK_ADDRESS;
+    mem->freeText = TEXT_ADDRESS;
+}
+
+Address MMU_alloc(Memory* mem, DATATYPE type, char* data)
+{
+    printf("MMU_alloc: %s\n", data);
+    Address ret = mem->freeData;
+    switch(type)
     {
-        mem->DATA[i] = 0;
-        mem->ROM[i] = 0;
-        mem->BSS[i] = 0;
-        mem->TEXT[i] = 0xff;
+    case ASCIIZ:
+        for(int i = 1; i < strlen(data) - 1; i++)
+        {
+            writeByte(mem, mem->freeData, data[i]);
+            mem->freeData++;
+        }
+        writeByte(mem, mem->freeData, 0);
+        mem->freeData++;
+        break;
+    case WORD:
+        if(!strncmp(data, "0x", 2))
+            writeDWord(mem, mem->freeData, (unsigned int)strtol(data, NULL, 16));
+        else
+            writeDWord(mem, mem->freeData, (unsigned int)strtol(data, NULL, 10));
+        mem->freeData += 4;
+        break;
+    case BYTE:
+        if(!strncmp(data, "0x", 2))
+            writeByte(mem, mem->freeData, (unsigned char)strtol(data, NULL, 16));
+        else
+            writeByte(mem, mem->freeData, (unsigned char)strtol(data, NULL, 10));
+        mem->freeData++;
+        break;
+    case SPACE:
+        if(!strncmp(data, "0x", 2))
+            mem->freeData += strtol(data, NULL, 16);
+        else
+            mem->freeData += strtol(data, NULL, 10);
+        break;
+    case HALF:
+        if(!strncmp(data, "0x", 2))
+            writeByte(mem, mem->freeData, (unsigned short)strtol(data, NULL, 16));
+        else
+            writeByte(mem, mem->freeData, (unsigned short)strtol(data, NULL, 10));
+        mem->freeData += 2;
+        break;
+    case FLOAT:
+        // TODO
+        mem->freeData += 4;
+        break;
+    case DOUBLE:
+        //TODO
+        mem->freeData += 8;
+        break;
     }
+
+    return ret;
 }
 
 unsigned char readByte(Memory* mem, Address addr)
@@ -29,8 +82,8 @@ unsigned int readDWord(Memory* mem, Address addr)
 
 unsigned int readCode(Memory* mem, Address addr)
 {
-    return (unsigned int)(mem->TEXT[addr] << 24) + (unsigned int)(mem->TEXT[addr+1] << 16) + 
-           (unsigned int)(mem->TEXT[addr+2] << 8) + (unsigned int)(mem->TEXT[addr+3]);
+    return (unsigned int)(mem->ROM[addr] << 24) + (unsigned int)(mem->ROM[addr+1] << 16) + 
+           (unsigned int)(mem->ROM[addr+2] << 8) + (unsigned int)(mem->ROM[addr+3]);
 }
 
 void writeByte(Memory* mem, Address addr, unsigned char val)
@@ -54,15 +107,13 @@ void writeDWord(Memory* mem, Address addr, unsigned int val)
 
 void writeCode(Memory* mem, Stack* code)
 {
-    int i = 0;
+    int i = TEXT_ADDRESS;
     Stack* tmp = code;
     while(tmp != NULL)
     {
         unsigned val = (int)tmp->value;
-        mem->TEXT[i++] = val >> 24;
-        mem->TEXT[i++] = (val & 0xff0000) >> 16;
-        mem->TEXT[i++] = (val & 0xff00) >> 8;
-        mem->TEXT[i++] = val & 0xff;
+        writeDWord(mem, i, val);
+        i+=4;
         tmp = tmp->next;
     }
 }
@@ -95,9 +146,9 @@ void print_text_segment_arrow(Memory* mem, unsigned int pc)
     }
 }
 
-void MMU_Print(Memory* mem, size_t length)
+void MMU_Print(Memory* mem, unsigned int start, size_t length)
 {
-    for(int i = 0; i < length; i++)
+    for(unsigned int i = start; i < start + length; i++)
     {
         if(i%16 == 0)
             printf("0x%08x: ", i);

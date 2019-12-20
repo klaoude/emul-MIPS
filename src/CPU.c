@@ -31,8 +31,8 @@ void CPU_Main(CPU* cpu, char pas)
                     Registers_Print(&(cpu->registers));
                     break;
                 case 'm':
-                    printf("----- Memory ------\n");
-                    MMU_Print(&(cpu->memory), 16*5);
+                    printf("----- Stack ------\n");
+                    MMU_Print(&(cpu->memory), 0, 16*5);
                     break;
                 case 't':
                     print_text_segment_arrow(&(cpu->memory), cpu->registers.PC);
@@ -48,7 +48,7 @@ void CPU_Main(CPU* cpu, char pas)
     puts("*** Final register states: ***");
     Registers_Print(&(cpu->registers));
     puts("*** Final memory states: ***");
-    MMU_Print(&(cpu->memory), 16*5);
+    MMU_Print(&(cpu->memory), 0, 16*5);
 }
 
 void CPU_Execute(CPU* cpu)

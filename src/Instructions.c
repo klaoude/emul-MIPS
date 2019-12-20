@@ -192,6 +192,7 @@ unsigned int translate_asm_op(char* line)
 
     Stack* opCodes = nSplit(line, " ", 1);
     char* op = (char*)Stack_At(opCodes, 0);
+    toUpper(&op);
 
     if(strcmp(op, "") == 0)
     {

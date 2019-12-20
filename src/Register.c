@@ -1,11 +1,13 @@
 #include "Register.h"
 
+#include "MMU.h"
+
 void Registers_Init(Registers* reg)
 {
     for(int i = 0; i < 32; i++)
         reg->reg[i] = 0;
-    reg->PC = 0;
-    reg->SP = 0;
+    reg->PC = TEXT_ADDRESS;
+    reg->SP = STACK_ADDRESS;
     reg->FP = 0;
     reg->HI = 0;
     reg->LO = 0;

@@ -71,3 +71,15 @@ void Stack_free(Stack** stack)
         tmp = next;
     }
 }
+
+size_t Stack_length(Stack* stack)
+{
+    size_t ret = 0;
+    Stack* tmp = stack;
+    while(tmp != NULL)
+    {
+        ret++;
+        tmp = tmp->next;
+    }
+    return ret;
+}

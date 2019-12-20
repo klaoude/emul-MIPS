@@ -9,6 +9,12 @@ void trim(char** str)
     }
 }
 
+void toUpper(char** str)
+{
+    for(int i = 0; i < strlen(*str); i++)
+        (*str)[i] = toupper((*str)[i]);
+}
+
 Stack* split(char* str, const char* delim)
 {
     if(str == NULL)
@@ -75,6 +81,102 @@ void remove_after_comment(char** str)
     }
 }
 
+char* remove_comments(char* str)
+{
+    char* no_comment = NULL;
+    Stack* lines = split(str, "\n");
+    for(int i = 0; i < Stack_length(lines); i++)
+    {
+        char* tmp = strdup((char*)Stack_At(lines, i));
+        char* tofree = tmp;
+        while(*tmp == ' ')
+            tmp++;
+
+        if(tmp[0] == '#')
+        {
+            free(tofree);
+            continue;
+        }
+
+        remove_after_comment(&tmp);
+
+        unsigned int tmplen = strlen(tmp);
+        unsigned int oldLen = (no_comment == NULL ? 0 : strlen(no_comment));
+        char* newstr = (char*)malloc(oldLen + tmplen + 2);
+        strncpy(newstr, no_comment, oldLen);
+        strncpy(newstr + oldLen, tmp, tmplen);
+        newstr[oldLen + tmplen] = '\n';
+        newstr[oldLen + tmplen + 1] = 0;
+
+        free(tofree);
+        if(no_comment != NULL)
+            free(no_comment);
+
+        no_comment = strdup(newstr);
+        free(newstr);
+    }
+
+    Stack_clear(&lines);
+    free(str);
+    return no_comment;
+}
+
+void replace_multi_space_with_single_space(char *str)
+{
+    char *dest = str;
+
+    while (*str)
+    {
+        while (*str == ' ' && *(str + 1) == ' ')
+            str++;
+
+       *dest++ = *str++;
+    }
+ 
+    *dest = 0;
+}
+
+Stack* getSectionContent(char* str, char* section)
+{
+    Stack* ret = Stack_Init();
+
+    char status = 0; // 0 = not in section, 1 = in section
+    char* line = strdup(str);
+    while(line)
+    {
+        char* nextline = strchr(line, '\n');
+        if(nextline)
+            *nextline = 0;
+
+        replace_multi_space_with_single_space(line);
+
+        switch(status)
+        {
+        case 0:
+            remove_space(&line);
+            if(!strcmp(line, section))
+                status = 1;
+            break;
+        case 1:
+            if(*line == '.' && strcmp(line+1, section))
+                status = 0;
+            else if(*line != 0)
+            {
+                printf("Add %s(%x) in stack ! %p\n", line, *line, ret);
+                Stack_Insert(&ret, strdup(line));
+            }
+            break;
+        }
+
+        if(nextline)
+            *nextline = '\n';
+        
+        line = nextline ? nextline + 1 : NULL;
+    }
+
+    return ret;
+}
+
 InstructionFormat getInstructionFmt(char* op)
 {
     if(strcmp(op, "ADD") == 0 || strcmp(op, "SUB") == 0 || strcmp(op, "MULT") == 0 || strcmp(op, "DIV") == 0 || strcmp(op, "AND") == 0 ||
@@ -90,7 +192,32 @@ InstructionFormat getInstructionFmt(char* op)
 
 unsigned char to_register_code(char* register_name)
 {
-    return atoi(register_name+1);
+    if(!strcmp(register_name+1, "zero"))
+        return 0;
+    else if(!strcmp(register_name+1, "at"))
+        return 1;
+    else if(register_name[2] == 'v')
+        return atoi(register_name+2)+2;
+    else if(register_name[2] == 'a')
+        return atoi(register_name+2)+4;
+    else if(register_name[2] == 't')
+        return atoi(register_name+2)+8;
+    else if(register_name[2] == 's')
+        return atoi(register_name+2)+16;
+    else if(register_name[2] == 't')
+        return atoi(register_name+2)+24;
+    else if(register_name[2] == 'k')
+        return atoi(register_name+2)+26;
+    else if(!strcmp(register_name+1, "gp"))
+        return 28;
+    else if(!strcmp(register_name+1, "sp"))
+        return 29;
+    else if(!strcmp(register_name+1, "fp"))
+        return 30;
+    else if(!strcmp(register_name+1, "ra"))
+        return 31;
+    else
+        return atoi(register_name+1);
 }
 
 unsigned char to_operation_code(char* op)

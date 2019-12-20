@@ -16,5 +16,6 @@ char Stack_isEmpty(Stack* stack);
 void* Stack_At(Stack* stack, unsigned int i);
 void Stack_free(Stack** stack);
 void Stack_clear(Stack** stack);
+size_t Stack_length(Stack* stack);
 
 #endif
