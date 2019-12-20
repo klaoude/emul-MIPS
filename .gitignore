@@ -1,0 +1,6 @@
+.vscode/
+bin/
+tests/
+hexified/
+in4.bin
+obj/
