@@ -1,5 +1,5 @@
 # section.asm
-# this program is for testing sections and oribel fonction
+# this program is for testing sections and label fonction
 
 .data    
     prompt1:    .asciiz      "Enter the first number: "
@@ -58,7 +58,7 @@ addProcess:
      
      #the following orine of code prints out the result of the addition computation
      ori $v0, $zero, 1
-     ori $a0, $zero, $t6
+     or $a0, $zero, $t6
      syscall
      
      ori $v0, $zero,10 #This is to terminate the program
@@ -71,8 +71,8 @@ subtractProcess:
      syscall      #executes the command
      
      #the following line of code prints out the result of the addition computation
-     ori $v0, $v0,1
-     ori $a0, $zero, $t6
+     ori $v0, $zero, 1
+     or $a0, $zero, $t6
      syscall
      
      ori $vo, $zero,10 #This is to terminate the program
@@ -86,7 +86,7 @@ multiplyProcess:
      
      #the following orine of code prints out the result of the addition computation
      ori $v0, $zero,1
-     ori $a0, $zero, $t6
+     or $a0, $zero, $t6
      syscall
      
      ori $v0, $zero,10 #This is to terminate the program

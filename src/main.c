@@ -32,7 +32,7 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
                 Address addr = ((Label*)tmp2->value)->addr;
                 if(((Label*)tmp2->value)->section == TEXT)
                 {
-                    addr = (addr - tmpPC) / 4;
+                    addr = (addr - tmpPC) / 4 - 1;
                     printf("Relative Address of %s is at %x, current PC = %x\n", ((Label*)tmp2->value)->name, addr, tmpPC);
                 }
 
@@ -103,10 +103,11 @@ int main(int argc, char** argv)
     FILE* outfile = NULL;
     char* outPath = NULL;
     char pas = 0;
+    char silent = 0;
     
     if(argc < 2)
     {
-        printf("Usage: %s input [output] [-pas]\n", argv[0]);
+        printf("Usage: %s input [output] [-pas / -silent]\n", argv[0]);
         return -1;
     }
 
@@ -114,6 +115,8 @@ int main(int argc, char** argv)
     {
         if(strcmp("-pas", argv[2]) == 0)
             pas = 1;
+        else if(strcmp("-silent", argv[2]) == 0)
+            silent = 1;
         else
             outPath = argv[2];
     }
@@ -122,6 +125,8 @@ int main(int argc, char** argv)
         outPath = argv[2];
         if(strcmp("-pas", argv[3]) == 0)
             pas = 1;
+        else if(strcmp("-silent", argv[3]) == 0)
+            silent = 1;
     }
     
 
@@ -177,7 +182,7 @@ int main(int argc, char** argv)
     getchar();
     //Stack_clear(&code);
 
-    CPU_Main(&cpu, pas);
+    CPU_Main(&cpu, pas, silent);
 
     fclose(infile);
 

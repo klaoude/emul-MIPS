@@ -12,7 +12,7 @@ typedef struct CPU
 } CPU;
 
 void CPU_Init(CPU* cpu);
-void CPU_Main(CPU* cpu, char pas);
+void CPU_Main(CPU* cpu, char pas, unsigned char silent);
 void CPU_Execute(CPU* cpu);
 
 #endif

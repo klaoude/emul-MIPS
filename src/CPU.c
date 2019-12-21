@@ -9,7 +9,7 @@ void CPU_Init(CPU* cpu)
     cpu->running = 1;
 }
 
-void CPU_Main(CPU* cpu, char pas)
+void CPU_Main(CPU* cpu, char pas, unsigned char silent)
 {
     while(cpu->running)
     {
@@ -21,7 +21,10 @@ void CPU_Main(CPU* cpu, char pas)
         }
 
         char* asm_str = translate_op_asm(code);
-        printf("Processing instruction:\n%08x  %s\n", code, asm_str);
+
+        if(!silent)
+            printf("Processing instruction:\n%08x  %s\n", code, asm_str);
+            
         free(asm_str);
         CPU_Execute(cpu);
         
@@ -47,13 +50,11 @@ void CPU_Main(CPU* cpu, char pas)
                     print_text_segment_arrow(&(cpu->memory), cpu->registers.PC);
                     break;
                 }
-            } while (c != 'c');
+            } while (c != 'c' && c != 0xa);
             
-        }
-        
-        puts("");        
+        }       
     }
-
+    puts("");
     puts("*** Final register states: ***");
     Registers_Print(&(cpu->registers));
     puts("*** Final memory states: ***");
@@ -62,8 +63,8 @@ void CPU_Main(CPU* cpu, char pas)
 
 void Execute_SYSCALL(CPU* cpu)
 {
-    printf("Executing SYSCALL => %d\n", cpu->registers.reg[2]);
-    printf("> ");
+    //printf("Executing SYSCALL => %d\n", cpu->registers.reg[2]);
+    //printf("> ");
     switch(cpu->registers.reg[2])
     {
     case 1:
@@ -92,7 +93,6 @@ void Execute_SYSCALL(CPU* cpu)
         printf("Unknown SYSCALL !\n");
         break;
     }
-    puts("");
 }
 
 void CPU_Execute(CPU* cpu)
