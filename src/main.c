@@ -6,6 +6,7 @@
 Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
 {
     Stack* ret = Stack_Init();
+    Address tmpPC = TEXT_ADDRESS;
 
     Stack* tmp = text_section;
     while(tmp != NULL)
@@ -27,7 +28,12 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
             {
                 char* newline = (char*)calloc(strlen(line) + 1, 1);
                 strncpy(newline, line, offset - line);
-                sprintf(newline + (offset - line), "%d", ((Label*)tmp2->value)->addr);
+
+                Address addr = ((Label*)tmp2->value)->addr;
+                if(((Label*)tmp2->value)->section == TEXT)
+                    addr = addr - tmpPC;
+
+                sprintf(newline + (offset - line), "%d", addr);
                 printf("old = %s, New line = %s\n", line, newline);
 
                 Stack_Insert(&ret, newline);
@@ -38,6 +44,9 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
         }
         if(!needChange)
             Stack_Insert(&ret, line);
+
+        tmpPC += 4;
+        
         tmp = tmp->next;
     }
 
