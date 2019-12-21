@@ -31,10 +31,12 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
 
                 Address addr = ((Label*)tmp2->value)->addr;
                 if(((Label*)tmp2->value)->section == TEXT)
-                    addr = addr - tmpPC;
+                {
+                    addr = (addr - tmpPC) / 4;
+                    printf("Relative Address of %s is at %x, current PC = %x\n", ((Label*)tmp2->value)->name, addr, tmpPC);
+                }
 
                 sprintf(newline + (offset - line), "%d", addr);
-                printf("old = %s, New line = %s\n", line, newline);
 
                 Stack_Insert(&ret, newline);
                 needChange = 1;
@@ -146,12 +148,6 @@ int main(int argc, char** argv)
     fread(file_str, 1, fileSize, infile);
 
     char* no_comment = remove_comments(file_str);
-
-    printf("%s\n", no_comment);
-
-    /*
-    
-    */
 
     if(line != NULL)
         free(line);   

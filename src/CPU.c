@@ -5,14 +5,23 @@ void CPU_Init(CPU* cpu)
     InitMemory(&(cpu->memory));
 
     Registers_Init(&(cpu->registers));
+
+    cpu->running = 1;
 }
 
 void CPU_Main(CPU* cpu, char pas)
 {
-    while(readCode(&(cpu->memory), cpu->registers.PC) != -1)
+    while(cpu->running)
     {
-        char* asm_str = translate_op_asm(readCode(&(cpu->memory), cpu->registers.PC));
-        printf("Processing instruction:\n%08x  %s\n", readCode(&(cpu->memory), cpu->registers.PC), asm_str);
+        unsigned int code = readCode(&(cpu->memory), cpu->registers.PC);
+        if(code == -1)
+        {
+            cpu->running = 0;
+            continue;
+        }
+
+        char* asm_str = translate_op_asm(code);
+        printf("Processing instruction:\n%08x  %s\n", code, asm_str);
         free(asm_str);
         CPU_Execute(cpu);
         
@@ -49,6 +58,41 @@ void CPU_Main(CPU* cpu, char pas)
     Registers_Print(&(cpu->registers));
     puts("*** Final memory states: ***");
     MMU_Print(&(cpu->memory), 0, 16*5);
+}
+
+void Execute_SYSCALL(CPU* cpu)
+{
+    printf("Executing SYSCALL => %d\n", cpu->registers.reg[2]);
+    printf("> ");
+    switch(cpu->registers.reg[2])
+    {
+    case 1:
+        printf("%d", cpu->registers.reg[4]);
+        break;
+    case 4:
+        for(Address i = cpu->registers.reg[4]; cpu->memory.ROM[i] != 0; i++)
+            printf("%c", cpu->memory.ROM[i]);
+        break;
+    case 5:
+        scanf("%d", &cpu->registers.reg[2]);
+        break;
+    case 8:
+        flush();
+        size_t size = cpu->registers.reg[4] + 1;
+        char* tmp = (char*)malloc(size);
+        fgets(tmp, size - 1, stdin);
+        for(unsigned int i = 0; i < size; i++)
+            writeByte(&cpu->memory, cpu->registers.reg[4] + i, tmp[i]);
+        writeByte(&cpu->memory, cpu->registers.reg[4] + size, 0);
+        break;
+    case 10:
+        cpu->running = 0;
+        break;
+    default:
+        printf("Unknown SYSCALL !\n");
+        break;
+    }
+    puts("");
 }
 
 void CPU_Execute(CPU* cpu)
@@ -98,7 +142,7 @@ void CPU_Execute(CPU* cpu)
         else if(opCode == 0x22)
             cpu->registers.reg[rd] = cpu->registers.reg[rs] - cpu->registers.reg[rt];
         else if(opCode == 0xc)
-            ; //SYSCALL
+            Execute_SYSCALL(cpu); //SYSCALL
         else if(opCode == 0x26)
             cpu->registers.reg[rd] = cpu->registers.reg[rs] ^ cpu->registers.reg[rt];
     }
@@ -139,7 +183,7 @@ void CPU_Execute(CPU* cpu)
         }
         else if(opCode == 0x2)
             cpu->registers.PC = (index << 2);
-        else if(opCode == 0x2)
+        else if(opCode == 0x3)
         {
             cpu->registers.reg[31] = cpu->registers.PC;
             cpu->registers.PC = (index << 2);
@@ -150,5 +194,7 @@ void CPU_Execute(CPU* cpu)
             cpu->registers.reg[rt] = readDWord(&(cpu->memory), cpu->registers.reg[rs] + immediate);
         else if(opCode == 0x2b)
             writeDWord(&(cpu->memory), cpu->registers.reg[rs] + immediate, cpu->registers.reg[rt]);  
+        else if(opCode == 0xd)
+            cpu->registers.reg[rt] = cpu->registers.reg[rs] | immediate;
     }
 }

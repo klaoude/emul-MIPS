@@ -213,7 +213,7 @@ unsigned int translate_asm_op(char* line)
         ret = write_typeR_instr(to_operation_code(op), to_register_code((char*)Stack_At(args, 1)), to_register_code((char*)Stack_At(args, 2)), 
                            to_register_code((char*)Stack_At(args, 0)), 0);
     }
-    else if(strcmp(op, "ADDI") == 0)
+    else if(strcmp(op, "ADDI") == 0 || strcmp(op, "ORI") == 0)
     {
         //args: rt = 0, rs = 1, immediate = 2
         ret = write_typeI_instr(to_operation_code(op), to_register_code((char*)Stack_At(args, 1)), 
@@ -351,7 +351,7 @@ char* translate_op_asm(unsigned int op)
             ret = read_typeI_instr("BNE ", rs, rt, immediate);
         else if(opCode == 0x2)
             ret = read_typeJ_instr("J ", index);
-        else if(opCode == 0x2)
+        else if(opCode == 0x3)
             ret = read_typeJ_instr("JAL ", index);
         else if(opCode == 0xf)
             ret = read_typeI_instr("LUI ", rt, 0x80, immediate);
@@ -359,6 +359,8 @@ char* translate_op_asm(unsigned int op)
             ret = read_typeI_instr("LW ", rt, rs, immediate);
         else if(opCode == 0x2b)
             ret = read_typeI_instr("SW ", rt, rs, immediate);
+        else if(opCode == 0xd)
+            ret = read_typeI_instr("ORI ", rt, rs, immediate);
         else
             ret = strdup("UNKNOW I/J TYPE INSTR");   
     }    

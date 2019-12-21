@@ -12,7 +12,6 @@ void InitMemory(Memory* mem)
 
 Address MMU_alloc(Memory* mem, DATATYPE type, char* data)
 {
-    printf("MMU_alloc: %s\n", data);
     Address ret = mem->freeData;
     switch(type)
     {

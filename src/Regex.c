@@ -16,7 +16,6 @@ Stack* regex_match(char* str, char* reg)
     if(pmatch)
     {
         match = regexec(&preg, str, nmatch, pmatch, 0);
-        printf("match = %d, nmatch = %d\n", match, nmatch);
         regfree(&preg);
         if(match == 0)
         {            
@@ -31,10 +30,7 @@ Stack* regex_match(char* str, char* reg)
                     strncpy(tmp, &str[start], size);
                     tmp[size] = 0;
                     if(*tmp != 0)
-                    {
-                      printf("Match(%d) : %s\n", i, tmp);
-                      Stack_Insert(&found, (void*)tmp);
-                    }                    
+                      Stack_Insert(&found, (void*)tmp);                   
                 }                
             }
         }

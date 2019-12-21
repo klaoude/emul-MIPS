@@ -162,7 +162,7 @@ Stack* getSectionContent(char* str, char* section)
                 status = 0;
             else if(*line != 0)
             {
-                printf("Add %s(%x) in stack ! %p\n", line, *line, ret);
+                printf("getSectionContent: add %s in %s\n", line, section);
                 Stack_Insert(&ret, strdup(line));
             }
             break;
@@ -184,7 +184,7 @@ InstructionFormat getInstructionFmt(char* op)
        strcmp(op, "SLT") == 0 || strcmp(op, "MFHI") == 0 || strcmp(op, "MFLO") == 0 || strcmp(op, "JR") == 0)
         return R;
     else if(strcmp(op, "ADDI") == 0 || strcmp(op, "LW") == 0 || strcmp(op, "SW") == 0 || strcmp(op, "LUI") == 0 || strcmp(op, "BEQ") == 0 ||
-            strcmp(op, "BNE") == 0 || strcmp(op, "BGTZ") == 0 || strcmp(op, "BLEZ") == 0)
+            strcmp(op, "BNE") == 0 || strcmp(op, "BGTZ") == 0 || strcmp(op, "BLEZ") == 0 || strcmp(op, "ORI") == 0)
         return I;
     else if(strcmp(op, "J") == 0 || strcmp(op, "JAL") == 0)
         return J;
@@ -274,6 +274,8 @@ unsigned char to_operation_code(char* op)
         return 12;
     else if(strcmp(op, "XOR") == 0)
         return 0x26;
+    else if(strcmp(op, "ORI") == 0)
+        return 0xd;
     return -1;    
 }
 

@@ -8,6 +8,7 @@ typedef struct CPU
 {
     Registers registers;
     Memory memory;
+    unsigned char running;
 } CPU;
 
 void CPU_Init(CPU* cpu);

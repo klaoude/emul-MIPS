@@ -47,7 +47,10 @@ void add_label_from_section(Stack** labels, Stack* section, SECTIONS s, CPU* cpu
             if((tmpp = strchr(val, ':')) != NULL)
             {
                 if(l != NULL)
+                {
+                    printf("Add %s in TEXT sections at addr : 0x%08x\n", l->name, l->addr);
                     Stack_Insert(labels, l);
+                }
                 l = (Label*)malloc(sizeof(Label));
                 char* dup = strdup(val);
                 dup[strlen(val)-1] = 0;
@@ -62,5 +65,11 @@ void add_label_from_section(Stack** labels, Stack* section, SECTIONS s, CPU* cpu
             break;
         }
         tmp = tmp->next;
+    }
+
+    if(l != NULL && s == TEXT)
+    {
+        printf("Add %s in TEXT sections at addr : 0x%08x\n", l->name, l->addr);
+        Stack_Insert(labels, l);
     }
 }
