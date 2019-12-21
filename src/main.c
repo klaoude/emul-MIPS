@@ -84,6 +84,7 @@ Stack* asm_to_hex(Stack* assembly, char pas, FILE* outfile)
         free(tmp);
         stack_tmp = stack_tmp->next;
     } 
+    return ret;
 }
 
 int main(int argc, char** argv)
@@ -164,8 +165,6 @@ int main(int argc, char** argv)
     MMU_Print(&(cpu.memory), DATA_ADDRESS, 0x40);
     puts("--------CODE Memory--------");
     MMU_Print(&(cpu.memory), TEXT_ADDRESS, 0x40);
-
-    exit(1);
 
     puts("*** Text segment loaded - Ready to execute ***");
     print_text_segment(&(cpu.memory));

@@ -7,6 +7,7 @@ void InitMemory(Memory* mem)
     mem->freeData = DATA_ADDRESS;
     mem->freeRom = STACK_ADDRESS;
     mem->freeText = TEXT_ADDRESS;
+    memset(mem->ROM + TEXT_ADDRESS, 0xff, 0x200);
 }
 
 Address MMU_alloc(Memory* mem, DATATYPE type, char* data)
@@ -113,15 +114,15 @@ void writeCode(Memory* mem, Stack* code)
     {
         unsigned val = (int)tmp->value;
         writeDWord(mem, i, val);
-        i+=4;
+        i += 4;
         tmp = tmp->next;
     }
 }
 
 void print_text_segment(Memory* mem)
 {
-    unsigned int code = readCode(mem, 0);
-    for(int i = 0; code != 0xffffffff; i+=4)
+    unsigned int code = readCode(mem, TEXT_ADDRESS);
+    for(int i = TEXT_ADDRESS; code != 0xffffffff; i+=4)
     {
         char* assm = translate_op_asm(code);
         printf("    0x%08x 0x%08x  {%s}\n", i, code, assm);
@@ -132,8 +133,8 @@ void print_text_segment(Memory* mem)
 
 void print_text_segment_arrow(Memory* mem, unsigned int pc)
 {
-    unsigned int code = readCode(mem, 0);
-    for(int i = 0; code != 0xffffffff; i+=4)
+    unsigned int code = readCode(mem, TEXT_ADDRESS);
+    for(int i = TEXT_ADDRESS; code != 0xffffffff; i+=4)
     {
         char* assm = translate_op_asm(code);
         if(i == pc)

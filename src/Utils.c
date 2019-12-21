@@ -196,17 +196,17 @@ unsigned char to_register_code(char* register_name)
         return 0;
     else if(!strcmp(register_name+1, "at"))
         return 1;
-    else if(register_name[2] == 'v')
+    else if(register_name[1] == 'v')
         return atoi(register_name+2)+2;
-    else if(register_name[2] == 'a')
+    else if(register_name[1] == 'a')
         return atoi(register_name+2)+4;
-    else if(register_name[2] == 't')
+    else if(register_name[1] == 't')
         return atoi(register_name+2)+8;
-    else if(register_name[2] == 's')
+    else if(register_name[1] == 's')
         return atoi(register_name+2)+16;
-    else if(register_name[2] == 't')
+    else if(register_name[1] == 't')
         return atoi(register_name+2)+24;
-    else if(register_name[2] == 'k')
+    else if(register_name[1] == 'k')
         return atoi(register_name+2)+26;
     else if(!strcmp(register_name+1, "gp"))
         return 28;
