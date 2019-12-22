@@ -182,11 +182,11 @@ void CPU_Execute(CPU* cpu)
                 cpu->registers.PC = cpu->registers.PC + (immediate << 2);
         }
         else if(opCode == 0x2)
-            cpu->registers.PC = (index << 2);
+            cpu->registers.PC = cpu->registers.PC + (index << 2);
         else if(opCode == 0x3)
         {
-            cpu->registers.reg[31] = cpu->registers.PC;
-            cpu->registers.PC = (index << 2);
+            cpu->registers.reg[31] = cpu->registers.PC + 4;
+            cpu->registers.PC = cpu->registers.PC + (index << 2);
         }
         else if(opCode == 0xf)
             cpu->registers.reg[rt] = (immediate << 16);

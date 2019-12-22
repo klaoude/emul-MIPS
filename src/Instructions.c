@@ -23,8 +23,8 @@ int write_typeI_instr(unsigned char opcode, unsigned char arg1, unsigned char ar
 
 int write_typeJ_instr(unsigned char op, int index)
 {
-    int hex = op; //opcode
-    hex += index;//instr_index
+    int hex = op << 26; //opcode
+    hex += index & 0x3ffffff;//instr_index
     return hex;
 }
 
@@ -241,7 +241,7 @@ unsigned int translate_asm_op(char* line)
         //args: rs = 0, rt = 1
         ret = write_typeR_instr(to_operation_code(op), to_register_code((char*)Stack_At(args, 0)), to_register_code((char*)Stack_At(args, 1)), 0, 0);
     }
-    else if(strcmp(op, "J") == 0)
+    else if(strcmp(op, "J") == 0 || strcmp(op, "JAL") == 0)
         ret = write_typeJ_instr(to_operation_code(op), atoi((char*)Stack_At(opCodes, 1)));
     else if(strcmp(op, "JR") == 0)
         ret = write_typeR_instr(to_operation_code(op), to_register_code((char*)Stack_At(opCodes, 1)), 0, 0, 0 /* hints */);

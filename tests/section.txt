@@ -6,6 +6,7 @@
     prompt2:    .asciiz      "Enter the second number: "
     menu:       .asciiz      "Enter the number associated with the operation you want performed: 1 => add, 2 => subtract or 3 => multiply: "
     resultText: .asciiz      "Your final result is: "
+    cazou_str:  .asciiz      "Cazou Yano !"
 
 .text
 main:
@@ -60,6 +61,8 @@ addProcess:
      ori $v0, $zero, 1
      or $a0, $zero, $t6
      syscall
+
+     #jal print_cazou
      
      ori $v0, $zero,10 #This is to terminate the program
      syscall
@@ -79,7 +82,8 @@ subtractProcess:
      syscall
 
 multiplyProcess:
-     mul $t6,$t0,$t1            #this adds the values stored in $t0 and $t1 and assigns them to the temporary register $t6
+     mult $t0,$t1                 #this adds the values stored in $t0 and $t1 and assigns them to the temporary register $t6
+     mflo $t6
      ori $v0, $zero,4             #this is the command for printing a string
      ori $a0, $zero,resultText    #this loads the string to print into the argument $a0 for printing
      syscall                    #executes the command
@@ -91,3 +95,10 @@ multiplyProcess:
      
      ori $v0, $zero,10 #This is to terminate the program
      syscall
+
+print_cazou:
+     ori $v0, $zero, 4
+     ori $a0, $zero, cazou_str
+     syscall
+
+     jr $ra

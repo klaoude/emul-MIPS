@@ -32,11 +32,14 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
                 Address addr = ((Label*)tmp2->value)->addr;
                 if(((Label*)tmp2->value)->section == TEXT)
                 {
-                    addr = (addr - tmpPC) / 4 - 1;
+                    addr = (((addr - tmpPC) / 4) & 0x3ffffff) - 1;
                     printf("Relative Address of %s is at %x, current PC = %x\n", ((Label*)tmp2->value)->name, addr, tmpPC);
                 }
 
-                sprintf(newline + (offset - line), "%d", addr);
+                if(addr & 0x2000000)
+                    sprintf(newline + (offset - line), "-%d", addr - 1 ^ 0x3ffffff);
+                else
+                    sprintf(newline + (offset - line), "%d", addr);
 
                 Stack_Insert(&ret, newline);
                 needChange = 1;
