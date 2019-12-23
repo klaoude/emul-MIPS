@@ -2,6 +2,24 @@
 
 #include "CPU.h"
 
+void Labels_free(Stack** labels)
+{
+    Stack* tmp = *labels;
+    while(tmp != NULL)
+    {
+        Stack* next = tmp->next;
+        if(tmp->value != NULL)
+        {
+            if(((Label*)tmp->value)->name != NULL)
+                free(((Label*)tmp->value)->name);
+            free(tmp->value);
+            tmp->value = NULL;
+        }
+        free(tmp);
+        tmp = next;
+    }
+}
+
 DATATYPE getDataType(char* str)
 {
     toUpper(&str);
@@ -34,11 +52,12 @@ void add_label_from_section(Stack** labels, Stack* section, SECTIONS s, CPU* cpu
         case DATA:
             match = regex_match((char*)tmp->value, "([A-Za-z0-9_]*): \\.([A-Za-z0-9]*) (.*)");
             l = (Label*)malloc(sizeof(Label));
-            l->name = (char*)Stack_At(match, 0);
+            l->name = strdup((char*)Stack_At(match, 0));
             l->section = DATA;
             DATATYPE type = getDataType((char*)Stack_At(match, 1));
             l->addr = MMU_alloc(&cpu->memory, type, (char*)Stack_At(match, 2));
             Stack_Insert(labels, l);
+            Stack_free(&match);
             break;
         case TEXT:
             ;
@@ -47,10 +66,7 @@ void add_label_from_section(Stack** labels, Stack* section, SECTIONS s, CPU* cpu
             if((tmpp = strchr(val, ':')) != NULL)
             {
                 if(l != NULL)
-                {
-                    printf("Add %s in TEXT sections at addr : 0x%08x\n", l->name, l->addr);
                     Stack_Insert(labels, l);
-                }
                 l = (Label*)malloc(sizeof(Label));
                 char* dup = strdup(val);
                 dup[strlen(val)-1] = 0;
@@ -68,8 +84,5 @@ void add_label_from_section(Stack** labels, Stack* section, SECTIONS s, CPU* cpu
     }
 
     if(l != NULL && s == TEXT)
-    {
-        printf("Add %s in TEXT sections at addr : 0x%08x\n", l->name, l->addr);
         Stack_Insert(labels, l);
-    }
 }

@@ -23,6 +23,7 @@ typedef struct Label
     SECTIONS section;
 } Label;
 
+void Labels_free(Stack** labels);
 DATATYPE getDataType(char* str);
 void add_label_from_section(Stack** labels, Stack* section, SECTIONS s, CPU* cpu);
 

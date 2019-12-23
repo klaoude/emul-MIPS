@@ -30,17 +30,26 @@ Stack* regex_match(char* str, char* reg)
                     strncpy(tmp, &str[start], size);
                     tmp[size] = 0;
                     if(*tmp != 0)
-                      Stack_Insert(&found, (void*)tmp);                   
+                        Stack_Insert(&found, (void*)tmp); 
+                    else
+                        free(tmp);
                 }                
             }
         }
         else
+        {
+            free(pmatch);
+            Stack_free(&found);
             return NULL;
+        }
         
         free(pmatch);
     }
     else
+    {
+        Stack_free(&found);
         return NULL;
+    }
 
     return found;
 }

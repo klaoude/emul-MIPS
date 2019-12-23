@@ -16,6 +16,7 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
         if(strchr(line, ':') != NULL)
         {
             tmp = tmp->next;
+            free(line);
             continue;
         }
 
@@ -25,35 +26,38 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
         {
             char* label_name = ((Label*)tmp2->value)->name;
             //regex = "(labeel_name)"
-            char* regex = (char*)malloc(strlen(label_name) + 3);
+            char* regex = (char*)malloc(strlen(label_name) + 10);
             sprintf(regex, "(%s($| ))", label_name);
             Stack* matches = regex_match(line, regex);
             free(regex);
             
             if(matches)
             {
+                Stack_free(&matches);
+
                 char* offset = strstr(line, label_name);
                 char* newline = (char*)calloc(strlen(line) + 1, 1);
                 strncpy(newline, line, offset - line);
 
                 Address addr = ((Label*)tmp2->value)->addr;
                 if(((Label*)tmp2->value)->section == TEXT)
-                {
                     addr = (((addr - tmpPC) / 4) & 0x3ffffff) - 1;
-                    printf("Relative Address of %s is at %x, current PC = %x\n", ((Label*)tmp2->value)->name, addr, tmpPC);
-                }
 
                 if(addr & 0x2000000)
                     sprintf(newline + (offset - line), "-%d", addr - 1 ^ 0x3ffffff);
                 else
                     sprintf(newline + (offset - line), "%d", addr);
 
-                printf("old: %s, new: %s\n", line, newline);
-
                 Stack_Insert(&ret, newline);
                 needChange = 1;
+
+                free(line);
+
                 break;
             }
+
+            Stack_free(&matches);
+
             tmp2 = tmp2->next;            
         }
         if(!needChange)
@@ -141,8 +145,7 @@ int main(int argc, char** argv)
             silent = 1;
     }
     
-
-    printf("Assembly file : %s\n", outPath);
+    printf("Assembly file : %s\n", argv[1]);
     if(outPath != NULL)
     {
         printf("Output will be written in : %s\n\n", outPath);
@@ -161,8 +164,9 @@ int main(int argc, char** argv)
     fseek(infile, 0, SEEK_END);
     size_t fileSize = ftell(infile);
     fseek(infile, 0, SEEK_SET);
-    char* file_str = (char*)malloc(fileSize);
+    char* file_str = (char*)malloc(fileSize + 1);
     fread(file_str, 1, fileSize, infile);
+    file_str[fileSize] = 0;
 
     char* no_comment = remove_comments(file_str);
 
@@ -174,6 +178,8 @@ int main(int argc, char** argv)
 
     Stack* data = getSectionContent(no_comment, ".data");
     Stack* text = getSectionContent(no_comment, ".text");
+    
+    free(no_comment);
 
     Stack* labels = Stack_Init();
     add_label_from_section(&labels, data, DATA, &cpu);
@@ -192,9 +198,14 @@ int main(int argc, char** argv)
     print_text_segment(&(cpu.memory));
     puts("\n*** Starting program execution ***\nPress Enter to continue");
     getchar();
-    //Stack_clear(&code);
 
     CPU_Main(&cpu, pas, silent);
+
+    Stack_free(&data);
+    Stack_free(&text);
+    Labels_free(&labels);
+    Stack_clear(&hexs);
+    Stack_free(&assembly);
 
     fclose(infile);
 

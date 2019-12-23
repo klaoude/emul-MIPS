@@ -17,7 +17,7 @@ void toUpper(char** str)
 
 Stack* split(char* str, const char* delim)
 {
-    if(str == NULL)
+    if(str == NULL || *str == 0)
         return NULL;
 
     Stack* stack = Stack_Init();
@@ -116,7 +116,7 @@ char* remove_comments(char* str)
         free(newstr);
     }
 
-    Stack_clear(&lines);
+    Stack_free(&lines);
     free(str);
     return no_comment;
 }
@@ -142,6 +142,7 @@ Stack* getSectionContent(char* str, char* section)
 
     char status = 0; // 0 = not in section, 1 = in section
     char* line = strdup(str);
+    char* toFree = line;
     while(line)
     {
         char* nextline = strchr(line, '\n');
@@ -161,10 +162,7 @@ Stack* getSectionContent(char* str, char* section)
             if(*line == '.' && strcmp(line+1, section))
                 status = 0;
             else if(*line != 0)
-            {
-                printf("getSectionContent: add %s in %s\n", line, section);
                 Stack_Insert(&ret, strdup(line));
-            }
             break;
         }
 
@@ -173,6 +171,8 @@ Stack* getSectionContent(char* str, char* section)
         
         line = nextline ? nextline + 1 : NULL;
     }
+
+    free(toFree);
 
     return ret;
 }
