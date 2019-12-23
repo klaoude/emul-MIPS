@@ -23,9 +23,16 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
         char needChange = 0;
         while(tmp2 != NULL)
         {
-            char* offset = NULL;
-            if((offset = strstr(line, ((Label*)tmp2->value)->name)) != NULL)
+            char* label_name = ((Label*)tmp2->value)->name;
+            //regex = "(labeel_name)"
+            char* regex = (char*)malloc(strlen(label_name) + 3);
+            sprintf(regex, "(%s($| ))", label_name);
+            Stack* matches = regex_match(line, regex);
+            free(regex);
+            
+            if(matches)
             {
+                char* offset = strstr(line, label_name);
                 char* newline = (char*)calloc(strlen(line) + 1, 1);
                 strncpy(newline, line, offset - line);
 
@@ -40,6 +47,8 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
                     sprintf(newline + (offset - line), "-%d", addr - 1 ^ 0x3ffffff);
                 else
                     sprintf(newline + (offset - line), "%d", addr);
+
+                printf("old: %s, new: %s\n", line, newline);
 
                 Stack_Insert(&ret, newline);
                 needChange = 1;

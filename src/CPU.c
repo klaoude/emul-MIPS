@@ -44,7 +44,7 @@ void CPU_Main(CPU* cpu, char pas, unsigned char silent)
                     break;
                 case 'm':
                     printf("----- Stack ------\n");
-                    MMU_Print(&(cpu->memory), 0, 16*5);
+                    MMU_Print(&(cpu->memory), STACK_ADDRESS - 0x40, 0x40);
                     break;
                 case 't':
                     print_text_segment_arrow(&(cpu->memory), cpu->registers.PC);
@@ -58,7 +58,7 @@ void CPU_Main(CPU* cpu, char pas, unsigned char silent)
     puts("*** Final register states: ***");
     Registers_Print(&(cpu->registers));
     puts("*** Final memory states: ***");
-    MMU_Print(&(cpu->memory), 0, 16*5);
+    MMU_Print(&(cpu->memory), STACK_ADDRESS - 0x40, 0x40);
 }
 
 void Execute_SYSCALL(CPU* cpu)
@@ -90,7 +90,7 @@ void Execute_SYSCALL(CPU* cpu)
         cpu->running = 0;
         break;
     default:
-        printf("Unknown SYSCALL !\n");
+        printf("Unknown SYSCALL: %d !\n", cpu->registers.reg[2]);
         break;
     }
 }
@@ -118,7 +118,7 @@ void CPU_Execute(CPU* cpu)
             cpu->registers.HI = cpu->registers.reg[rs] % cpu->registers.reg[rt];
         }
         else if(opCode == 0x08)
-            cpu->registers.PC = cpu->registers.reg[rs];
+            cpu->registers.PC = cpu->registers.reg[rs] - 4;
         else if(opCode == 0x10)
             cpu->registers.reg[rd] = cpu->registers.HI;  
         else if(opCode == 0x12)

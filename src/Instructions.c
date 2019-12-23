@@ -23,8 +23,9 @@ int write_typeI_instr(unsigned char opcode, unsigned char arg1, unsigned char ar
 
 int write_typeJ_instr(unsigned char op, int index)
 {
-    int hex = op << 26; //opcode
-    hex += index & 0x3ffffff;//instr_index
+    unsigned int hex = op << 26; //opcode
+    int tmp = (index & 0x3ffffff);
+    hex += (index & 0x3ffffff);//instr_index
     return hex;
 }
 
@@ -176,7 +177,10 @@ char* read_typeJ_instr(const char* opname, int index)
 {
     char* ret = (char*)malloc(15);
     strcpy(ret, opname);
-    sprintf(ret + strlen(ret), "%d", index);
+    if(index & 0x2000000)
+        sprintf(ret + strlen(ret), "-%d", index - 1 ^ 0x3ffffff);
+    else
+        sprintf(ret + strlen(ret), "%d", index);
     return ret;
 }
 
