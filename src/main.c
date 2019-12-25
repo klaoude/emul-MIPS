@@ -22,12 +22,13 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
 
         Stack* tmp2 = labels;
         char needChange = 0;
+        char deleted = 0;
         while(tmp2 != NULL)
         {
             char* label_name = ((Label*)tmp2->value)->name;
             //regex = "(labeel_name)"
             char* regex = (char*)malloc(strlen(label_name) + 10);
-            sprintf(regex, "(%s($| ))", label_name);
+            sprintf(regex, "(%s($| |\\|))", label_name);
             Stack* matches = regex_match(line, regex);
             free(regex);
             
@@ -41,14 +42,38 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
 
                 Address addr = ((Label*)tmp2->value)->addr;
                 if(((Label*)tmp2->value)->section == TEXT)
+                {
                     addr = (((addr - tmpPC) / 4) & 0x3ffffff) - 1;
+                    printf("Label %s at relative %d\n", label_name, addr);
+                    if(addr & 0x2000000)
+                        sprintf(newline + (offset - line), "-%d", addr - 1 ^ 0x3ffffff);
+                    else
+                        sprintf(newline + (offset - line), "%d", addr);
 
-                if(addr & 0x2000000)
-                    sprintf(newline + (offset - line), "-%d", addr - 1 ^ 0x3ffffff);
+                    Stack_Insert(&ret, newline);
+                }
                 else
-                    sprintf(newline + (offset - line), "%d", addr);
+                {
+                    char* spe = strchr(offset, '|');
+                    if(spe)
+                    {
+                        if(!strcmp("HI", spe + 1))
+                        {
+                            Address hiAddr = addr & 0xffff0000;
+                            sprintf(newline + (offset - line), "%d", hiAddr >> 16);
+                            printf("HI Insert: %s\n", newline);
+                            Stack_Insert(&ret, newline);
+                        }
+                        else if(!strcmp("LO", spe + 1))
+                        {
+                            Address loAddr = addr & 0xffff;
+                            sprintf(newline + (offset - line), "%d", loAddr);
+                            printf("LO Insert: %s\n", newline);
+                            Stack_Insert(&ret, newline);
+                        }
+                    }
+                }
 
-                Stack_Insert(&ret, newline);
                 needChange = 1;
 
                 free(line);
@@ -60,10 +85,12 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
 
             tmp2 = tmp2->next;            
         }
+
         if(!needChange)
             Stack_Insert(&ret, line);
 
-        tmpPC += 4;
+        if(!deleted)
+            tmpPC += 4;
         
         tmp = tmp->next;
     }
@@ -170,22 +197,28 @@ int main(int argc, char** argv)
 
     char* no_comment = remove_comments(file_str);
 
+    char* translated = translate_pseudoMIPS(no_comment);
+
+    printf("\n%s\n\n", translated);
+
     if(line != NULL)
         free(line);   
 
     CPU cpu;
     CPU_Init(&cpu);
 
-    Stack* data = getSectionContent(no_comment, ".data");
-    Stack* text = getSectionContent(no_comment, ".text");
+    Stack* data = getSectionContent(translated, ".data");
+    Stack* text = getSectionContent(translated, ".text");
     
     free(no_comment);
+    free(translated);
 
     Stack* labels = Stack_Init();
     add_label_from_section(&labels, data, DATA, &cpu);
     add_label_from_section(&labels, text, TEXT, &cpu);
 
     Stack* assembly = remplace_label_with_address(text, labels);
+
     Stack* hexs = asm_to_hex(assembly, pas, outfile);
     writeCode(&(cpu.memory), hexs);
 

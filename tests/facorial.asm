@@ -8,39 +8,37 @@ resultStr: .asciiz     "! = "
 .text
 main:
     #print(prompt)
-    ori $a0, $zero, prompt
-    ori $v0, $zero, 4
+    la $a0, prompt
+    li $v0, 4
     syscall                   
 
-    #$a0 = gets()
-    ori $v0, $zero, 5
+    #$t0 = gets()
+    li $v0, 5
     syscall
-    or $a0, $zero, $v0
+    move $t0, $v0
+    move $a0, $t0
 
-    #t0 = a0
-    or $t0, $zero, $a0
-
-    #t1 = fact()
+    #t1 = fact(t0)
     jal fact
-    or $t1, $zero, $v0
+    move $t1, $v0
 
     #print(t0)
-    or $a0, $zero, $t0
-    ori $v0, $zero, 1
+    move $a0, $t0
+    li $v0, 1
     syscall
 
     #print(resultStr)
-    ori $a0, $zero, resultStr
-    ori $v0, $zero, 4
+    la $a0, resultStr
+    li $v0, 4
     syscall
 
     #print(t1)
-    or $a0, $zero, $t1
-    ori $v0, $zero, 1
+    move $a0, $t1
+    li $v0, 1
     syscall
 
     #exit()
-    ori $v0, $zero, 10
+    li $v0, 10
     syscall
 
 fact:
@@ -48,15 +46,14 @@ fact:
     sw $s0, ($sp)          # push s0
     sw $ra, 4($sp)         # push ra, store return addr
 
-    ori $v0, $zero, 1      # v0 = 1
+    li $v0, 1              # v0 = 1
     beq $a0, 0, fact_done  # if(a0 == 0) goto fact_done
 
-    or $s0, $zero, $a0     # s0 = a0
+    move $s0, $a0          # s0 = a0
     addi $a0, $a0, -1      # a0--
     jal fact               # fact()
 
-    mult $s0, $v0          # v0 *= s0
-    mflo $v0
+    mul $v0, $s0, $v0      # v0 *= s0
 
 fact_done:
     lw $s0, ($sp)          # pop s0

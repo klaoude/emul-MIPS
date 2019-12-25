@@ -81,6 +81,24 @@ void remove_after_comment(char** str)
     }
 }
 
+char* strnewline(char* old, char* append)
+{
+    unsigned int tmplen = strlen(append);
+    unsigned int oldLen = (old == NULL ? 0 : strlen(old));
+    char* newstr = (char*)malloc(oldLen + tmplen + 2);
+    strncpy(newstr, old, oldLen);
+    strncpy(newstr + oldLen, append, tmplen);
+    newstr[oldLen + tmplen] = '\n';
+    newstr[oldLen + tmplen + 1] = 0;
+
+    if(old != NULL)
+        free(old);
+    
+    char* ret = strdup(newstr);
+    free(newstr);
+    return ret;
+}
+
 char* remove_comments(char* str)
 {
     char* no_comment = NULL;
@@ -100,20 +118,7 @@ char* remove_comments(char* str)
 
         remove_after_comment(&tmp);
 
-        unsigned int tmplen = strlen(tmp);
-        unsigned int oldLen = (no_comment == NULL ? 0 : strlen(no_comment));
-        char* newstr = (char*)malloc(oldLen + tmplen + 2);
-        strncpy(newstr, no_comment, oldLen);
-        strncpy(newstr + oldLen, tmp, tmplen);
-        newstr[oldLen + tmplen] = '\n';
-        newstr[oldLen + tmplen + 1] = 0;
-
-        free(tofree);
-        if(no_comment != NULL)
-            free(no_comment);
-
-        no_comment = strdup(newstr);
-        free(newstr);
+        no_comment = strnewline(no_comment, tmp);
     }
 
     Stack_free(&lines);
@@ -134,6 +139,113 @@ void replace_multi_space_with_single_space(char *str)
     }
  
     *dest = 0;
+}
+
+char* translate_pseudoMIPS(char* str)
+{
+    char* translated = NULL;
+    Stack* lines = split(str, "\n");
+    for(int i = 0; i < Stack_length(lines); i++)
+    {
+        char* line = (char*)Stack_At(lines, i);
+        if(strcmp(line, "") == 0)
+            continue;
+            
+        char* tmp = strdup(line);
+
+        Stack* split_stack = nSplit(line, " ", 1);
+        char* opName = (char*)Stack_At(split_stack, 0);
+
+        if(strcasecmp(opName, "move") == 0)
+        {
+            Stack* args = split((char*)Stack_At(split_stack, 1), ",");
+            char* arg0 = (char*)Stack_At(args, 0);
+            char* arg1 = (char*)Stack_At(args, 1);
+
+            remove_space(&arg0);
+            remove_space(&arg1);
+
+            char* newstr = (char*)malloc(13 + strlen(arg0) + strlen(arg1));
+            sprintf(newstr, "or %s, %s, $zero", arg0, arg1);
+            translated = strnewline(translated, newstr);
+
+            Stack_free(&args);
+        }
+        else if(strcasecmp(opName, "clear") == 0)
+        {
+            char* arg = (char*)Stack_At(split_stack, 1);
+            char* newstr = (char*)malloc(18 + strlen(arg));
+            sprintf(newstr, "or %s, $zero, $zero", arg);
+            translated = strnewline(translated, newstr);
+        }
+        else if(strcasecmp(opName, "la") == 0 || strcasecmp(opName, "li") == 0)
+        {
+            Stack* args = split((char*)Stack_At(split_stack, 1), ",");
+            char* arg0 = (char*)Stack_At(args, 0);
+            char* arg1 = (char*)Stack_At(args, 1);
+
+            remove_space(&arg1);
+
+            if(*arg1 >= '0' && *arg1 <= '9')
+            {
+                unsigned int arg1_num = atoi(arg1);
+                if(arg1_num > 0xffff)
+                {
+                    char* newstr = (char*)malloc(7 + strlen(arg0) + 5);
+                    sprintf(newstr, "lui %s, %d", arg0, (arg1_num & 0xffff0000) >> 16);
+                    translated = strnewline(translated, newstr);
+
+                    newstr = (char*)malloc(9 + 2 * strlen(arg0) + 5);
+                    sprintf(newstr, "ori %s, %s, %d", arg0, arg0, arg1_num & 0xffff);
+                    translated = strnewline(translated, newstr);
+                }
+                else
+                {
+                    char* newstr = (char*)malloc(15 + strlen(arg0) + 5);
+                    sprintf(newstr, "ori %s, $zero, %d", arg0, arg1_num);
+                    translated = strnewline(translated, newstr);
+                }                
+            }
+            else
+            {
+                char* newstr = (char*)malloc(7 + strlen(arg0) + strlen(arg1) + 3);
+                sprintf(newstr, "lui %s, %s|HI", arg0, arg1);
+                translated = strnewline(translated, newstr);
+
+                newstr = (char*)malloc(9 + 2 * strlen(arg0) + strlen(arg1) + 3);
+                sprintf(newstr, "ori %s, %s, %s|LO", arg0, arg0, arg1);
+                translated = strnewline(translated, newstr);      
+            }     
+
+            Stack_free(&args);
+        }
+        else if(strcasecmp(opName, "mul") == 0)
+        {
+            Stack* args = split((char*)Stack_At(split_stack, 1), ",");
+            char* arg0 = (char*)Stack_At(args, 0);
+            char* arg1 = (char*)Stack_At(args, 1);
+            char* arg2 = (char*)Stack_At(args, 2);
+
+            char* newstr = (char*)malloc(8 + strlen(arg1) + strlen(arg2));
+            sprintf(newstr, "mult %s, %s", arg1, arg2);
+            translated = strnewline(translated, newstr);
+
+            newstr = (char*)malloc(6 + strlen(arg0));
+            sprintf(newstr, "mflo %s", arg0);
+            translated = strnewline(translated, newstr);
+
+            Stack_free(&args);
+        }
+        else
+            translated = strnewline(translated, line);
+
+        Stack_free(&split_stack);
+
+        free(tmp);
+    }
+    Stack_free(&lines);
+
+    return translated;
 }
 
 Stack* getSectionContent(char* str, char* section)
