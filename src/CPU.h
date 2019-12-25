@@ -11,7 +11,9 @@ typedef struct CPU
     unsigned char running;
 } CPU;
 
+//Init the CPU
 void CPU_Init(CPU* cpu);
+//Main loop of the CPU
 void CPU_Main(CPU* cpu, char pas, unsigned char silent);
 void CPU_Execute(CPU* cpu);
 

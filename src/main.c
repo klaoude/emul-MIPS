@@ -51,7 +51,6 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
                 if(((Label*)tmp2->value)->section == TEXT)
                 {
                     addr = (((addr - tmpPC) / 4) & 0x3ffffff) - 1;
-                    printf("Label %s at relative %d\n", label_name, addr);
                     if(addr & 0x2000000)
                         sprintf(newline + (offset - line), "-%d", addr - 1 ^ 0x3ffffff);
                     else
@@ -68,14 +67,12 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
                         {
                             Address hiAddr = addr & 0xffff0000;
                             sprintf(newline + (offset - line), "%d", hiAddr >> 16);
-                            printf("HI Insert: %s\n", newline);
                             Stack_Insert(&ret, newline);
                         }
                         else if(!strcmp("LO", spe + 1))
                         {
                             Address loAddr = addr & 0xffff;
                             sprintf(newline + (offset - line), "%d", loAddr);
-                            printf("LO Insert: %s\n", newline);
                             Stack_Insert(&ret, newline);
                         }
                     }
@@ -210,10 +207,7 @@ int main(int argc, char** argv)
     file_str[fileSize] = 0;
 
     char* no_comment = remove_comments(file_str);
-
     char* translated = translate_pseudoMIPS(no_comment);
-
-    printf("\n%s\n\n", translated);
 
     if(line != NULL)
         free(line);   
