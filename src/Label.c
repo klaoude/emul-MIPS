@@ -62,6 +62,12 @@ void add_label_from_section(Stack** labels, Stack* section, SECTIONS s, CPU* cpu
         case TEXT:
             ;
             char* val = (char*)tmp->value;
+            if(!val)
+            {
+                tmp = tmp->next;
+                continue;
+            }
+
             char* tmpp;
             if((tmpp = strchr(val, ':')) != NULL)
             {

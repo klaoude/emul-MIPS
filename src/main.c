@@ -11,7 +11,14 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
     Stack* tmp = text_section;
     while(tmp != NULL)
     {
-        char* line = strdup((char*)tmp->value);
+        char* val = (char*)tmp->value;
+        if(!val)
+        {
+            tmp = tmp->next;
+            continue;
+        }
+
+        char* line = strdup(val);
 
         if(strchr(line, ':') != NULL)
         {
@@ -27,7 +34,7 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
         {
             char* label_name = ((Label*)tmp2->value)->name;
             //regex = "(labeel_name)"
-            char* regex = (char*)malloc(strlen(label_name) + 10);
+            char* regex = (char*)malloc(strlen(label_name) + 13);
             sprintf(regex, "(%s($| |\\|))", label_name);
             Stack* matches = regex_match(line, regex);
             free(regex);
@@ -106,7 +113,14 @@ Stack* asm_to_hex(Stack* assembly, char pas, FILE* outfile)
     Stack* ret = Stack_Init();
     while(stack_tmp != NULL)
     {
-        char* tmp = strdup((char*)stack_tmp->value);
+        char* val = (char*)stack_tmp->value;
+        if(!val)
+        {
+            stack_tmp = stack_tmp->next;
+            continue;
+        }
+
+        char* tmp = strdup(val);
         trim(&tmp);
         if(strcmp(tmp, "") == 0)
         {

@@ -119,6 +119,7 @@ char* remove_comments(char* str)
         remove_after_comment(&tmp);
 
         no_comment = strnewline(no_comment, tmp);
+        free(tofree);
     }
 
     Stack_free(&lines);
@@ -169,6 +170,8 @@ char* translate_pseudoMIPS(char* str)
             sprintf(newstr, "or %s, %s, $zero", arg0, arg1);
             translated = strnewline(translated, newstr);
 
+            free(newstr);
+
             Stack_free(&args);
         }
         else if(strcasecmp(opName, "clear") == 0)
@@ -177,6 +180,7 @@ char* translate_pseudoMIPS(char* str)
             char* newstr = (char*)malloc(18 + strlen(arg));
             sprintf(newstr, "or %s, $zero, $zero", arg);
             translated = strnewline(translated, newstr);
+            free(newstr);
         }
         else if(strcasecmp(opName, "la") == 0 || strcasecmp(opName, "li") == 0)
         {
@@ -194,16 +198,19 @@ char* translate_pseudoMIPS(char* str)
                     char* newstr = (char*)malloc(7 + strlen(arg0) + 5);
                     sprintf(newstr, "lui %s, %d", arg0, (arg1_num & 0xffff0000) >> 16);
                     translated = strnewline(translated, newstr);
+                    free(newstr);
 
                     newstr = (char*)malloc(9 + 2 * strlen(arg0) + 5);
                     sprintf(newstr, "ori %s, %s, %d", arg0, arg0, arg1_num & 0xffff);
                     translated = strnewline(translated, newstr);
+                    free(newstr);
                 }
                 else
                 {
                     char* newstr = (char*)malloc(15 + strlen(arg0) + 5);
                     sprintf(newstr, "ori %s, $zero, %d", arg0, arg1_num);
                     translated = strnewline(translated, newstr);
+                    free(newstr);
                 }                
             }
             else
@@ -211,10 +218,12 @@ char* translate_pseudoMIPS(char* str)
                 char* newstr = (char*)malloc(7 + strlen(arg0) + strlen(arg1) + 3);
                 sprintf(newstr, "lui %s, %s|HI", arg0, arg1);
                 translated = strnewline(translated, newstr);
+                free(newstr);
 
                 newstr = (char*)malloc(9 + 2 * strlen(arg0) + strlen(arg1) + 3);
                 sprintf(newstr, "ori %s, %s, %s|LO", arg0, arg0, arg1);
-                translated = strnewline(translated, newstr);      
+                translated = strnewline(translated, newstr);  
+                free(newstr);    
             }     
 
             Stack_free(&args);
@@ -229,10 +238,12 @@ char* translate_pseudoMIPS(char* str)
             char* newstr = (char*)malloc(8 + strlen(arg1) + strlen(arg2));
             sprintf(newstr, "mult %s, %s", arg1, arg2);
             translated = strnewline(translated, newstr);
+            free(newstr);
 
             newstr = (char*)malloc(6 + strlen(arg0));
             sprintf(newstr, "mflo %s", arg0);
             translated = strnewline(translated, newstr);
+            free(newstr);
 
             Stack_free(&args);
         }
@@ -260,6 +271,15 @@ Stack* getSectionContent(char* str, char* section)
         char* nextline = strchr(line, '\n');
         if(nextline)
             *nextline = 0;
+
+        if(!strcmp(line, ""))
+        {
+            if(nextline)
+                *nextline = '\n';
+        
+            line = nextline ? nextline + 1 : NULL;
+            continue;
+        }
 
         replace_multi_space_with_single_space(line);
 
