@@ -61,14 +61,23 @@ void CPU_Main(CPU* cpu, char pas, unsigned char silent)
     MMU_Print(&(cpu->memory), STACK_ADDRESS - 0x40, 0x40);
 }
 
+//https://courses.missouristate.edu/KenVollmar/MARS/Help/SyscallHelp.html
 void Execute_SYSCALL(CPU* cpu)
 {
     //printf("Executing SYSCALL => %d\n", cpu->registers.reg[2]);
     //printf("> ");
+    FILE* f;
+    char* tmp;
     switch(cpu->registers.reg[2])
     {
     case 1:
         printf("%d", cpu->registers.reg[4]);
+        break;
+    case 2:
+        printf("%f", cpu->registers.reg[4]);
+        break;
+    case 3:
+        printf("%f", cpu->registers.reg[4]);
         break;
     case 4:
         for(Address i = cpu->registers.reg[4]; cpu->memory.ROM[i] != 0; i++)
@@ -80,13 +89,45 @@ void Execute_SYSCALL(CPU* cpu)
     case 8:
         flush();
         size_t size = cpu->registers.reg[4] + 1;
-        char* tmp = (char*)malloc(size);
+        tmp = (char*)malloc(size);
         fgets(tmp, size - 1, stdin);
-        for(unsigned int i = 0; i < size; i++)
-            writeByte(&cpu->memory, cpu->registers.reg[4] + i, tmp[i]);
-        writeByte(&cpu->memory, cpu->registers.reg[4] + size, 0);
+        writeString(&cpu->memory, cpu->registers.reg[4], tmp);
         break;
     case 10:
+        cpu->running = 0;
+        break;
+    case 11:
+        printf("%c", cpu->registers.reg[4]);
+        break;
+    case 12:
+        scanf("%c", &cpu->registers.reg[2]);
+        break;
+    case 13:
+        ;char* path = readString(&cpu->memory, cpu->registers.reg[4]);
+        f = -1;
+        if(cpu->registers.reg[5] == 0)
+            f = fopen(path, "r");
+        else if(cpu->registers.reg[5] == 1)
+            f = fopen(path, "w");
+        cpu->registers.reg[2] = f;
+        break;
+    case 14:
+        f = cpu->registers.reg[4];
+        tmp = (char*)malloc(cpu->registers.reg[6] + 1);
+        cpu->registers.reg[2] = fread(tmp, 1, cpu->registers.reg[6], f);
+        writeString(&cpu->memory, cpu->registers.reg[5], tmp);
+        free(tmp);
+        break;
+    case 15:
+        f = cpu->registers.reg[4];
+        tmp = readString(&cpu->memory, cpu->registers.reg[5]);
+        cpu->registers.reg[2] = fwrite(tmp, 1, cpu->registers.reg[6], f);
+        free(tmp);
+        break;
+    case 16:
+        fclose(cpu->registers.reg[4]);
+        break;
+    case 17:
         cpu->running = 0;
         break;
     default:

@@ -2,6 +2,8 @@
 
 Stack* regex_match(char* str, char* reg)
 {
+    if(str == NULL)
+        return NULL;
     Stack* found = Stack_Init();
     regex_t preg;
     int err = regcomp(&preg, reg, REG_EXTENDED);

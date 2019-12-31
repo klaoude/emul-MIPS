@@ -42,6 +42,7 @@ unsigned short readWord(Memory* mem, Address addr);
 unsigned int readDWord(Memory* mem, Address addr);
 double readDouble(Memory* mem, Address addr);
 float readFloat(Memory* mem, Address addr);
+char* readString(Memory* mem, Address addr);
 
 unsigned int readCode(Memory* mem, Address addr);
 
@@ -50,6 +51,7 @@ void writeWord(Memory* mem, Address addr, unsigned short val);
 void writeDWord(Memory* mem, Address addr, unsigned int val);
 void writeDouble(Memory* mem, Address addr, double val);
 void writeFloat(Memory* mem, Address addr, float val);
+void writeString(Memory* mem, Address addr, char* str);
 
 void writeCode(Memory* mem, Stack* code);
 

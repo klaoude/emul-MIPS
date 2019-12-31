@@ -86,6 +86,18 @@ unsigned int readCode(Memory* mem, Address addr)
            (unsigned int)(mem->ROM[addr+2] << 8) + (unsigned int)(mem->ROM[addr+3]);
 }
 
+char* readString(Memory* mem, Address addr)
+{
+    unsigned int stringSize = 0;
+    while(readByte(mem, addr + stringSize) != 0)
+        stringSize++;
+    stringSize++;
+    char* ret = (char*)malloc(stringSize);
+    for(unsigned int i = 0; i < stringSize; i++)
+        ret[i] = readByte(mem, addr + i);
+    return ret;
+}
+
 void writeByte(Memory* mem, Address addr, unsigned char val)
 {
     mem->ROM[addr] = val;
@@ -104,6 +116,15 @@ void writeDWord(Memory* mem, Address addr, unsigned int val)
     writeByte(mem, addr+2, (val & 0xff00) >> 8);
     writeByte(mem, addr+3, val & 0xff);
 }
+
+void writeString(Memory* mem, Address addr, char* str)
+{
+    size_t string_len = strlen(str);
+    for(unsigned int i = 0; i < string_len; i++)
+        writeByte(mem, addr + i, str[i]);
+    writeByte(mem, addr + string_len + 1, 0);
+}
+
 
 void writeCode(Memory* mem, Stack* code)
 {

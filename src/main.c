@@ -215,6 +215,8 @@ int main(int argc, char** argv)
     CPU cpu;
     CPU_Init(&cpu);
 
+    printf("%s\n", translated);
+
     Stack* data = getSectionContent(translated, ".data");
     Stack* text = getSectionContent(translated, ".text");
     
