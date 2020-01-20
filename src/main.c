@@ -128,6 +128,7 @@ Stack* asm_to_hex(Stack* assembly, char pas, FILE* outfile)
         if(strcmp(tmp, "") == 0)
         {
             free(tmp);
+            stack_tmp = stack_tmp->next;
             continue;
         }
         unsigned int translate = translate_asm_op(tmp);
@@ -196,6 +197,7 @@ int main(int argc, char** argv)
         printf("No input file detected or invalide, entering interactive mode.\n");
         char userinput[512] = {0};
         Stack* hexs = Stack_Init();
+        unsigned int i = 0;
         while(strcasecmp(userinput, "EXIT"))
         {
             fgets(userinput, 511, stdin);
@@ -203,7 +205,7 @@ int main(int argc, char** argv)
             CPU cpu;
             CPU_Init(&cpu);
 
-            CPU_interactive(&cpu, (unsigned int)hexs->value);
+            CPU_interactive(&cpu, (unsigned int)Stack_At(hexs, i++));
         }
     }
     else
@@ -238,16 +240,29 @@ int main(int argc, char** argv)
         Stack* data = getSectionContent(translated, ".data");
         Stack* text = getSectionContent(translated, ".text");
         
-        free(no_comment);
-        free(translated);
+        Stack* hexs;
+        Stack* labels;
+        Stack* assembly;
 
-        Stack* labels = Stack_Init();
-        add_label_from_section(&labels, data, DATA, &cpu);
-        add_label_from_section(&labels, text, TEXT, &cpu);
+        if(Stack_isEmpty(text))
+        {
+            assembly = split(translated, "\n");
+            hexs = asm_to_hex(assembly, pas, outfile);
+        }
+        else
+        {
+            free(no_comment);
+            free(translated);
 
-        Stack* assembly = remplace_label_with_address(text, labels);
+            Stack* labels = Stack_Init();
+            add_label_from_section(&labels, data, DATA, &cpu);
+            add_label_from_section(&labels, text, TEXT, &cpu);
 
-        Stack* hexs = asm_to_hex(assembly, pas, outfile);
+            Stack* assembly = remplace_label_with_address(text, labels);
+
+            hexs = asm_to_hex(assembly, pas, outfile);
+        }
+        
         writeCode(&(cpu.memory), hexs);
 
         puts("--------DATA Memory--------");
