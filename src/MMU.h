@@ -21,7 +21,8 @@ typedef struct Memory
     Address freeData;
     Address freeBss;
     Address freeText;
-    Address freeRom;
+    //Address freeRom;
+    Address freeHeap;
 } Memory;
 
 typedef enum DATATYPE
@@ -59,5 +60,6 @@ void print_text_segment(Memory* mem);
 void print_text_segment_arrow(Memory* mem, unsigned int pc);
 void MMU_Print(Memory* mem, unsigned int start, size_t length);
 Address MMU_alloc(Memory* mem, DATATYPE type, char* data);
+Address MMU_HeapAlloc(Memory* mem, size_t size);
 
 #endif

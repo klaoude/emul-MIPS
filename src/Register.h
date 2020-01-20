@@ -3,7 +3,7 @@
 
 #include "stdio.h"
 
-typedef unsigned int Register;
+typedef unsigned long Register;
 
 typedef struct Registers
 {

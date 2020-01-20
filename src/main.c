@@ -33,7 +33,6 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
         while(tmp2 != NULL)
         {
             char* label_name = ((Label*)tmp2->value)->name;
-            //regex = "(labeel_name)"
             char* regex = (char*)malloc(strlen(label_name) + 13);
             sprintf(regex, "(%s($| |\\|))", label_name);
             Stack* matches = regex_match(line, regex);
@@ -55,6 +54,7 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
                         sprintf(newline + (offset - line), "-%d", addr - 1 ^ 0x3ffffff);
                     else
                         sprintf(newline + (offset - line), "%d", addr);
+                    printf("\t%s\n", newline);
 
                     Stack_Insert(&ret, newline);
                 }
@@ -76,6 +76,12 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
                             Stack_Insert(&ret, newline);
                         }
                     }
+                    else
+                    {
+                        sprintf(newline + (offset - line), "%d", addr);
+                        Stack_Insert(&ret, newline);
+                    }
+                    
                 }
 
                 needChange = 1;
@@ -83,7 +89,7 @@ Stack* remplace_label_with_address(Stack* text_section, Stack* labels)
                 free(line);
 
                 break;
-            }
+            }            
 
             Stack_free(&matches);
 
@@ -161,8 +167,8 @@ int main(int argc, char** argv)
     
     if(argc < 2)
     {
-        printf("Usage: %s input [output] [-pas / -silent]\n", argv[0]);
-        return -1;
+        printf("Usage: %s input [output / -i] [-pas / -silent]\n", argv[0]);
+        //return -1;
     }
 
     if(argc == 3)
@@ -182,78 +188,91 @@ int main(int argc, char** argv)
         else if(strcmp("-silent", argv[3]) == 0)
             silent = 1;
     }
-    
-    printf("Assembly file : %s\n", argv[1]);
-    if(outPath != NULL)
-    {
-        printf("Output will be written in : %s\n\n", outPath);
-        outfile = fopen(outPath, "w");
-    }
 
     FILE* infile = fopen(argv[1], "r");
 
     if(infile == NULL)
-        return 1;
+    {
+        printf("No input file detected or invalide, entering interactive mode.\n");
+        char userinput[512] = {0};
+        Stack* hexs = Stack_Init();
+        while(strcasecmp(userinput, "EXIT"))
+        {
+            scanf("%511s", userinput);
+            Stack_Insert(&hexs, (void*)translate_asm_op(userinput));
+            CPU cpu;
+            CPU_Init(&cpu);
 
-    size_t read = 0, len = 0;
-    char* line = NULL;
-    unsigned int i = 1;
+            CPU_interactive(&cpu, (unsigned int)hexs->value);
+        }
+    }
+    else
+    {
+        printf("Assembly file : %s\n", argv[1]);
+        if(outPath != NULL)
+        {
+            printf("Output will be written in : %s\n\n", outPath);
+            outfile = fopen(outPath, "w");
+        }
 
-    fseek(infile, 0, SEEK_END);
-    size_t fileSize = ftell(infile);
-    fseek(infile, 0, SEEK_SET);
-    char* file_str = (char*)malloc(fileSize + 1);
-    fread(file_str, 1, fileSize, infile);
-    file_str[fileSize] = 0;
+        size_t read = 0, len = 0;
+        char* line = NULL;
+        unsigned int i = 1;
 
-    char* no_comment = remove_comments(file_str);
-    char* translated = translate_pseudoMIPS(no_comment);
+        fseek(infile, 0, SEEK_END);
+        size_t fileSize = ftell(infile);
+        fseek(infile, 0, SEEK_SET);
+        char* file_str = (char*)malloc(fileSize + 1);
+        fread(file_str, 1, fileSize, infile);
+        file_str[fileSize] = 0;
 
-    if(line != NULL)
-        free(line);   
+        char* no_comment = remove_comments(file_str);
+        char* translated = translate_pseudoMIPS(no_comment);
 
-    CPU cpu;
-    CPU_Init(&cpu);
+        if(line != NULL)
+            free(line);
 
-    printf("%s\n", translated);
+        CPU cpu;
+        CPU_Init(&cpu);
 
-    Stack* data = getSectionContent(translated, ".data");
-    Stack* text = getSectionContent(translated, ".text");
-    
-    free(no_comment);
-    free(translated);
+        Stack* data = getSectionContent(translated, ".data");
+        Stack* text = getSectionContent(translated, ".text");
+        
+        free(no_comment);
+        free(translated);
 
-    Stack* labels = Stack_Init();
-    add_label_from_section(&labels, data, DATA, &cpu);
-    add_label_from_section(&labels, text, TEXT, &cpu);
+        Stack* labels = Stack_Init();
+        add_label_from_section(&labels, data, DATA, &cpu);
+        add_label_from_section(&labels, text, TEXT, &cpu);
 
-    Stack* assembly = remplace_label_with_address(text, labels);
+        Stack* assembly = remplace_label_with_address(text, labels);
 
-    Stack* hexs = asm_to_hex(assembly, pas, outfile);
-    writeCode(&(cpu.memory), hexs);
+        Stack* hexs = asm_to_hex(assembly, pas, outfile);
+        writeCode(&(cpu.memory), hexs);
 
-    puts("--------DATA Memory--------");
-    MMU_Print(&(cpu.memory), DATA_ADDRESS, 0x40);
-    puts("--------CODE Memory--------");
-    MMU_Print(&(cpu.memory), TEXT_ADDRESS, 0x40);
+        puts("--------DATA Memory--------");
+        MMU_Print(&(cpu.memory), DATA_ADDRESS, 0x40);
+        puts("--------CODE Memory--------");
+        MMU_Print(&(cpu.memory), TEXT_ADDRESS, 0x40);
 
-    puts("*** Text segment loaded - Ready to execute ***");
-    print_text_segment(&(cpu.memory));
-    puts("\n*** Starting program execution ***\nPress Enter to continue");
-    getchar();
+        puts("*** Text segment loaded - Ready to execute ***");
+        print_text_segment(&(cpu.memory));
+        puts("\n*** Starting program execution ***\nPress Enter to continue");
+        getchar();
 
-    CPU_Main(&cpu, pas, silent);
+        CPU_Main(&cpu, pas, silent);
 
-    Stack_free(&data);
-    Stack_free(&text);
-    Labels_free(&labels);
-    Stack_clear(&hexs);
-    Stack_free(&assembly);
+        Stack_free(&data);
+        Stack_free(&text);
+        Labels_free(&labels);
+        Stack_clear(&hexs);
+        Stack_free(&assembly);
 
-    fclose(infile);
+        fclose(infile);
 
-    if(outfile != NULL)
-        fclose(outfile);
+        if(outfile != NULL)
+            fclose(outfile);
+    }
 
     return 0;
 }

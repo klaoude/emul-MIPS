@@ -16,5 +16,6 @@ void CPU_Init(CPU* cpu);
 //Main loop of the CPU
 void CPU_Main(CPU* cpu, char pas, unsigned char silent);
 void CPU_Execute(CPU* cpu);
+void CPU_interactive(CPU* cpu, unsigned int code);
 
 #endif

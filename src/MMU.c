@@ -5,7 +5,7 @@ void InitMemory(Memory* mem)
     memset(mem->ROM, 0, 0xffff);
     mem->freeBss = BSS_ADDRESS;
     mem->freeData = DATA_ADDRESS;
-    mem->freeRom = STACK_ADDRESS;
+    mem->freeHeap = STACK_ADDRESS;
     mem->freeText = TEXT_ADDRESS;
     memset(mem->ROM + TEXT_ADDRESS, 0xff, 0x200);
 }
@@ -61,6 +61,13 @@ Address MMU_alloc(Memory* mem, DATATYPE type, char* data)
         break;
     }
 
+    return ret;
+}
+
+Address MMU_HeapAlloc(Memory* mem, size_t size)
+{
+    Address ret = mem->freeHeap;
+    mem->freeHeap += size;
     return ret;
 }
 

@@ -9,6 +9,36 @@ void CPU_Init(CPU* cpu)
     cpu->running = 1;
 }
 
+void CPU_interactive(CPU* cpu, unsigned int code)
+{
+    if(code == -1)
+        return;
+
+    CPU_Execute_One(cpu, code);
+
+    char c = 0;
+    do
+    {
+        puts("*** [r]: display registers; [m]: memory; [t]: text segment; [c]: continue");
+        c = getchar();
+        flush();
+        switch(c)
+        {
+        case 'r':
+            printf("----- Registers ------\n");
+            Registers_Print(&(cpu->registers));
+            break;
+        case 'm':
+            printf("----- Stack ------\n");
+            MMU_Print(&(cpu->memory), STACK_ADDRESS - 0x40, 0x40);
+            break;
+        case 't':
+            print_text_segment_arrow(&(cpu->memory), cpu->registers.PC);
+            break;
+        }
+    } while (c != 'c' && c != 0xa);
+}
+
 void CPU_Main(CPU* cpu, char pas, unsigned char silent)
 {
     while(cpu->running)
@@ -93,6 +123,9 @@ void Execute_SYSCALL(CPU* cpu)
         fgets(tmp, size - 1, stdin);
         writeString(&cpu->memory, cpu->registers.reg[4], tmp);
         break;
+    case 9:
+        cpu->registers.reg[2] = MMU_HeapAlloc(&cpu->memory, cpu->registers.reg[4]);
+        break;
     case 10:
         cpu->running = 0;
         break;
@@ -136,11 +169,8 @@ void Execute_SYSCALL(CPU* cpu)
     }
 }
 
-void CPU_Execute(CPU* cpu)
+void CPU_Execute_One(CPU* cpu, unsigned int instr)
 {
-    unsigned int instr = readCode(&(cpu->memory), cpu->registers.PC);
-    cpu->registers.PC += 4;
-
     if((instr & 0xfc000000) == 0)
     {
         char opCode = instr & 0x3f;
@@ -238,4 +268,12 @@ void CPU_Execute(CPU* cpu)
         else if(opCode == 0xd)
             cpu->registers.reg[rt] = cpu->registers.reg[rs] | immediate;
     }
+}
+
+void CPU_Execute(CPU* cpu)
+{
+    unsigned int instr = readCode(&(cpu->memory), cpu->registers.PC);
+    cpu->registers.PC += 4;
+
+    CPU_Execute_One(cpu, instr);
 }
