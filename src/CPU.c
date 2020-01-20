@@ -9,36 +9,6 @@ void CPU_Init(CPU* cpu)
     cpu->running = 1;
 }
 
-void CPU_interactive(CPU* cpu, unsigned int code)
-{
-    if(code == -1)
-        return;
-
-    CPU_Execute_One(cpu, code);
-
-    char c = 0;
-    do
-    {
-        puts("*** [r]: display registers; [m]: memory; [t]: text segment; [c]: continue");
-        c = getchar();
-        flush();
-        switch(c)
-        {
-        case 'r':
-            printf("----- Registers ------\n");
-            Registers_Print(&(cpu->registers));
-            break;
-        case 'm':
-            printf("----- Stack ------\n");
-            MMU_Print(&(cpu->memory), STACK_ADDRESS - 0x40, 0x40);
-            break;
-        case 't':
-            print_text_segment_arrow(&(cpu->memory), cpu->registers.PC);
-            break;
-        }
-    } while (c != 'c' && c != 0xa);
-}
-
 void CPU_Main(CPU* cpu, char pas, unsigned char silent)
 {
     while(cpu->running)
@@ -276,4 +246,34 @@ void CPU_Execute(CPU* cpu)
     cpu->registers.PC += 4;
 
     CPU_Execute_One(cpu, instr);
+}
+
+void CPU_interactive(CPU* cpu, unsigned int code)
+{
+    if(code == -1)
+        return;
+
+    CPU_Execute_One(cpu, code);
+
+    char c = 0;
+    do
+    {
+        puts("*** [r]: display registers; [m]: memory; [t]: text segment; [c]: continue");
+        c = getchar();
+        flush();
+        switch(c)
+        {
+        case 'r':
+            printf("----- Registers ------\n");
+            Registers_Print(&(cpu->registers));
+            break;
+        case 'm':
+            printf("----- Stack ------\n");
+            MMU_Print(&(cpu->memory), STACK_ADDRESS - 0x40, 0x40);
+            break;
+        case 't':
+            print_text_segment_arrow(&(cpu->memory), cpu->registers.PC);
+            break;
+        }
+    } while (c != 'c' && c != 0xa);
 }

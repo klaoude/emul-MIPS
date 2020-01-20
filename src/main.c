@@ -198,7 +198,7 @@ int main(int argc, char** argv)
         Stack* hexs = Stack_Init();
         while(strcasecmp(userinput, "EXIT"))
         {
-            scanf("%511s", userinput);
+            fgets(userinput, 511, stdin);
             Stack_Insert(&hexs, (void*)translate_asm_op(userinput));
             CPU cpu;
             CPU_Init(&cpu);
